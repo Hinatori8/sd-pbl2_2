@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Monthly Memo Stack – Tap to Expand</title>
+<link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+<script defer src="https://pyscript.net/latest/pyscript.js"></script>
 <style>
 :root {
   /* collapsed card size */
@@ -92,8 +94,8 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,"Noto Sans 
 
 /* close button */
 .close-btn{
-  position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;border-radius:50%;
-  background:#eee;cursor:pointer;font-size:22px;line-height:34px;padding:0;color:#333;
+  position:absolute;top:12px;right:12px;width:60px;height:34px;border:none;border-radius:6px;
+  background:#eee;cursor:pointer;font-size:16px;line-height:34px;padding:0;color:#333;
   transition:background .15s;
 }
 .close-btn:hover{background:#ddd;}
@@ -103,26 +105,49 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,"Noto Sans 
 <body>
 
 <div class="stack" id="stack"></div>
+<pre id="memoOutput" style="width:90%;margin:1rem auto;padding:1rem;border:1px solid #ccc;background:#f9f9f9;overflow:auto;white-space:pre-wrap;"></pre>
 
 <!-- Modal for expanded memo -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <button class="close-btn" id="closeBtn" aria-label="close">×</button>
+      <button class="close-btn" id="closeBtn" aria-label="変更">変更</button>
     <h2 id="modalTitle">タイトル</h2>
     <textarea id="modalTextarea" placeholder="メモを書いてね…"></textarea>
   </div>
 </div>
 
+<py-script id="memoData">
+memos = {m: "" for m in ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]}
+
+def update_memo(month, text):
+    memos[month] = text
+
+def get_memos():
+    return memos
+</py-script>
+
 <script>
 /** ========== DATA GENERATION ========== */
 const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
 const stack = document.getElementById('stack');
+const outputEl = document.getElementById('memoOutput');
+
+function updateOutput(){
+  const py = document.getElementById('memoData');
+  if(py && py.interpreter && outputEl){
+    const getMemos = py.interpreter.globals.get('get_memos');
+    const memos = getMemos().toJs();
+    outputEl.textContent = JSON.stringify(memos, null, 2);
+  }
+}
+
 months.forEach(m => {
   const card = document.createElement('article');
   card.className = 'card';
   card.innerHTML = `<h2>${m}</h2><textarea placeholder="メモを書いてね…"></textarea>`;
   stack.appendChild(card);
 });
+updateOutput();
 
 /** ========== INTERSECTION OBSERVERS ========== */
 // 1) active card boost
@@ -148,8 +173,17 @@ stack.addEventListener('click',e=>{
   if(!card) return;
   currentCard = card;
   // set modal content
-  modalTitle.textContent = card.querySelector('h2').textContent;
+  const month = card.querySelector('h2').textContent;
+  modalTitle.textContent = month;
   modalTextarea.value = card.querySelector('textarea').value;
+  const py = document.getElementById('memoData');
+  if(py && py.interpreter){
+    const getMemos = py.interpreter.globals.get('get_memos');
+    const memos = getMemos().toJs();
+    if(memos[month] !== undefined){
+      modalTextarea.value = memos[month];
+    }
+  }
   modal.classList.add('open');
   document.body.style.overflow='hidden'; // prevent bg scroll
 });
@@ -159,8 +193,14 @@ function closeModal(){
   if(!modal.classList.contains('open')) return;
   // save back the value
   if(currentCard){
+    const month = currentCard.querySelector('h2').textContent;
     currentCard.querySelector('textarea').value = modalTextarea.value;
+        const py = document.getElementById('memoData');
+    if(py && py.interpreter){
+      py.interpreter.globals.get('update_memo')(month, modalTextarea.value);
+    }
   }
+  updateOutput();
   modal.classList.remove('open');
   document.body.style.overflow='';
   modalTextarea.blur();
