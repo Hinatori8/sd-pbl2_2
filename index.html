@@ -110,7 +110,7 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,"Noto Sans 
 <!-- Modal for expanded memo -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <button class="close-btn" id="closeBtn">変更</button>
+    <button class="close-btn" id="closeBtn" aria-label="変更">変更</button>
     <h2 id="modalTitle">タイトル</h2>
     <textarea id="modalTextarea" placeholder="メモを書いてね…"></textarea>
   </div>
@@ -135,7 +135,8 @@ const outputEl = document.getElementById('memoOutput');
 function updateOutput(){
   const py = document.getElementById('memoData');
   if(py && py.interpreter && outputEl){
-    const memos = py.interpreter.globals.get('memos').toJs();
+    const getMemos = py.interpreter.globals.get('get_memos');
+    const memos = getMemos().toJs();
     outputEl.textContent = JSON.stringify(memos, null, 2);
   }
 }
@@ -177,7 +178,8 @@ stack.addEventListener('click',e=>{
   modalTextarea.value = card.querySelector('textarea').value;
   const py = document.getElementById('memoData');
   if(py && py.interpreter){
-    const memos = py.interpreter.globals.get('memos').toJs();
+    const getMemos = py.interpreter.globals.get('get_memos');
+    const memos = getMemos().toJs();
     if(memos[month] !== undefined){
       modalTextarea.value = memos[month];
     }
