@@ -117,10 +117,10 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,"Noto Sans 
 </div>
 
 <py-script id="memoData">
-memos = {m: "" for m in ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]}
+memos = ["" for _ in range(12)]  # 12 element list for each month
 
-def update_memo(month, text):
-    memos[month] = text
+def update_memo(index, text):
+    memos[index] = text
 
 def get_memos():
     return memos
@@ -141,9 +141,10 @@ function updateOutput(){
   }
 }
 
-months.forEach(m => {
+months.forEach((m, i) => {
   const card = document.createElement('article');
   card.className = 'card';
+  card.dataset.index = i;
   card.innerHTML = `<h2>${m}</h2><textarea placeholder="メモを書いてね…"></textarea>`;
   stack.appendChild(card);
 });
@@ -172,7 +173,8 @@ stack.addEventListener('click',e=>{
   const card = e.target.closest('.card');
   if(!card) return;
   currentCard = card;
-  const month = card.querySelector('h2').textContent;
+  const index = Number(card.dataset.index);
+  const month = months[index];
   // set modal content
   modalTitle.textContent = month;
   modalTextarea.value = card.querySelector('textarea').value;
@@ -180,8 +182,8 @@ stack.addEventListener('click',e=>{
   if(py && py.interpreter){
     const getMemos = py.interpreter.globals.get('get_memos');
     const memos = getMemos().toJs();
-    if(memos[month] !== undefined){
-      modalTextarea.value = memos[month];
+    if(memos[index] !== undefined){
+      modalTextarea.value = memos[index];
     }
   }
   modal.classList.add('open');
@@ -193,11 +195,11 @@ function closeModal(){
   if(!modal.classList.contains('open')) return;
   // save back the value
   if(currentCard){
-    const month = currentCard.querySelector('h2').textContent;
+    const index = Number(currentCard.dataset.index);
     currentCard.querySelector('textarea').value = modalTextarea.value;
     const py = document.getElementById('memoData');
     if(py && py.interpreter){
-      py.interpreter.globals.get('update_memo')(month, modalTextarea.value);
+      py.interpreter.globals.get('update_memo')(index, modalTextarea.value);
     }
   }
   updateOutput();
