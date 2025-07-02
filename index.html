@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Monthly Memo Stack – Tap to Expand</title>
+<style>
+:root {
+  /* collapsed card size */
+  --card-w: 90vw;        /* almost full‑width on mobile */
+  --card-h: 260px;       /* 高さを抑えて情報量を整理 */
+  --gap:  -140px;        /* カードが食い込む量 – 適度な重なり */
+}
+
+/* ====== GLOBAL ====== */
+html,body{height:100%;margin:0;overflow:hidden;font-family:system-ui,"Noto Sans JP",sans-serif;}
+
+/* ====== STACK SECTION ====== */
+.stack{
+  height:100vh;
+  overflow-y:auto;           /* only vertical scroll inside */
+  perspective:1200px;
+  scroll-snap-type:y mandatory;
+  /* fade top & bottom */
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,black 48px,black calc(100% - 48px),transparent);
+          mask-image:linear-gradient(to bottom,transparent 0,black 48px,black calc(100% - 48px),transparent);
+}
+
+/* ====== CARD (collapsed) ====== */
+.card{
+  width:var(--card-w);
+  height:var(--card-h);
+  margin:0 auto var(--gap);
+  padding:1rem;
+  box-sizing:border-box;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.06);   /* faint outline so card is visible */
+  border-radius:1rem;
+  position:sticky;top:0;
+  transform-origin:center top;
+  scroll-snap-align:start;
+  transition:transform .3s ease,opacity .25s linear;
+  position:relative;                 /* base for ::after shadow */
+  cursor:pointer;                    /* indicate tappable */
+}
+
+/* 下方向のみの影 */
+.card::after{
+  content:"";
+  position:absolute;
+  left:18px;right:18px;bottom:-14px;
+  height:28px;border-radius:50%;
+  background:rgba(0,0,0,.18);
+  filter:blur(12px);
+  opacity:.25;
+  transition:opacity .25s ease;
+  pointer-events:none;
+}
+
+.card.is-active{transform:translateZ(60px) scale(1.04);z-index:2;}
+.card.is-active::after{opacity:.45;}
+
+/* テキスト要素 */
+.card h2{margin:0 0 .5rem;font:bold 1.4rem/1.2 system-ui, sans-serif;}
+.card textarea{
+  width:100%;height:70%;resize:none;border:none;outline:none;font:1rem/1.4 "Noto Sans JP",sans-serif;background:transparent;
+}
+.card textarea::placeholder{color:#aaa;}
+
+/* ====== MODAL (expanded editor) ====== */
+.modal{
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
+  z-index:999;
+}
+.modal.open{display:flex;animation:fadeIn .2s;} /* simple fade */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+.modal-content{
+  width:92vw;max-width:600px;height:80vh;
+  background:#fff;border-radius:1.2rem;padding:1.5rem;box-sizing:border-box;
+  display:flex;flex-direction:column;position:relative;
+  box-shadow:0 8px 32px rgba(0,0,0,.25);
+  animation:pop .25s ease;
+}
+@keyframes pop{from{transform:translateY(40px) scale(.95);}to{transform:translateY(0) scale(1);}}
+
+.modal-content h2{margin:0 0 1rem;font:bold 1.6rem/1.2 system-ui, sans-serif;}
+.modal-content textarea{
+  flex:1;resize:none;border:none;outline:none;font:1rem/1.5 "Noto Sans JP",sans-serif;
+}
+
+/* close button */
+.close-btn{
+  position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;border-radius:50%;
+  background:#eee;cursor:pointer;font-size:22px;line-height:34px;padding:0;color:#333;
+  transition:background .15s;
+}
+.close-btn:hover{background:#ddd;}
+
+</style>
+</head>
+<body>
+
+<div class="stack" id="stack"></div>
+
+<!-- Modal for expanded memo -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="close-btn" id="closeBtn" aria-label="close">×</button>
+    <h2 id="modalTitle">タイトル</h2>
+    <textarea id="modalTextarea" placeholder="メモを書いてね…"></textarea>
+  </div>
+</div>
+
+<script>
+/** ========== DATA GENERATION ========== */
+const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const stack = document.getElementById('stack');
+months.forEach(m => {
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.innerHTML = `<h2>${m}</h2><textarea placeholder="メモを書いてね…"></textarea>`;
+  stack.appendChild(card);
+});
+
+/** ========== INTERSECTION OBSERVERS ========== */
+// 1) active card boost
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e=>e.target.classList.toggle('is-active',e.isIntersecting));
+},{root:stack,threshold:.55});
+// 2) fade opacity based on visibility
+const ioFade = new IntersectionObserver(entries => {
+  entries.forEach(ent=>{ent.target.style.opacity = ent.intersectionRatio.toFixed(3);});
+},{root:stack,threshold:Array.from({length:21},(_,i)=>i/20)});
+
+document.querySelectorAll('.card').forEach(c=>{io.observe(c);ioFade.observe(c);});
+
+/** ========== MODAL LOGIC ========== */
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modalTitle');
+const modalTextarea = document.getElementById('modalTextarea');
+let currentCard = null;
+
+// open handler
+stack.addEventListener('click',e=>{
+  const card = e.target.closest('.card');
+  if(!card) return;
+  currentCard = card;
+  // set modal content
+  modalTitle.textContent = card.querySelector('h2').textContent;
+  modalTextarea.value = card.querySelector('textarea').value;
+  modal.classList.add('open');
+  document.body.style.overflow='hidden'; // prevent bg scroll
+});
+
+// close handler
+function closeModal(){
+  if(!modal.classList.contains('open')) return;
+  // save back the value
+  if(currentCard){
+    currentCard.querySelector('textarea').value = modalTextarea.value;
+  }
+  modal.classList.remove('open');
+  document.body.style.overflow='';
+  modalTextarea.blur();
+}
+document.getElementById('closeBtn').onclick = closeModal;
+modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+
+</script>
+</body>
+</html>
