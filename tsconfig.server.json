@@ -1,11 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "ESNext",          // package.json が "type": "module" なので ES モジュールで出力
     "moduleResolution": "node",
     "outDir": "dist",
+    "noEmit": false,            // ★ 追加して noEmit を打ち消す
     "esModuleInterop": true,
-    "types": ["node"]             // Node のグローバル型を解決
+    "types": ["node"]
   },
   "include": ["server.ts"]
 }
