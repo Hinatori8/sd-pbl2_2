@@ -5,6 +5,7 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "noEmit": false,            // ★ 追加して noEmit を打ち消す
+    "allowImportingTsExtensions": false,
     "esModuleInterop": true,
     "types": ["node"]
   },
