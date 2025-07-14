@@ -1,15 +1,18 @@
-
+/* ---------- server.ts すべて ---------- */
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+/* ===== Gemini 設定 ===== */
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-/** JSON Schema（Type enum を使うと型推論が通る） */
 const jobSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -19,29 +22,41 @@ const jobSchema: Schema = {
     description: { type: Type.STRING },
   },
   required: ['title', 'startDate', 'endDate'],
-} as const;               // ← satisfies Schema でも可
+} as const;
 
+/* ===== API ルート ===== */
 app.post('/api/schedule', async (req: Request, res: Response) => {
   try {
     const userText = String(req.body?.text ?? '');
-    const today = new Date().toISOString().slice(0, 10);
+    const today    = new Date().toISOString().slice(0, 10);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    const resp = await ai.models.generateContent({
+      model:    'gemini-2.5-flash',
       contents: userText,
       config: {
-        systemInstruction: `あなたは…現在の日付は ${today} です。`,
+        systemInstruction: `あなたはカレンダーアシスタントです。現在の日付は ${today} です。`,
         responseMimeType:  'application/json',
-        responseSchema:    jobSchema,     // ← もう赤線は出ない
+        responseSchema:    jobSchema,
       },
     });
 
-    res.json(JSON.parse(response.text ?? '{}'));
+    res.json(JSON.parse(resp.text ?? '{}'));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Gemini 呼び出しに失敗しました' });
   }
 });
 
-const port = Number(process.env.PORT) || 8080;
-app.listen(port, () => console.log(`API server listening on ${port}`));
+/* ===== フロント配信 ===== */
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); // dist
+app.use(express.static(__dirname));                             // /dist 配下を公開
+
+// SPA 用フォールバック ― ★ワイルドカードに名前を付ける★
+app.get('/*path', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+/* ===== サーバ起動 ===== */
+const PORT = Number(process.env.PORT) || 8080;
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+/* ---------- ここまで ---------- */
