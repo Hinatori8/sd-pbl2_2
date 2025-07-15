@@ -30,13 +30,15 @@ app.post('/api/schedule', async (req: Request, res: Response) => {
     const userText = String(req.body?.text ?? '');
     const today    = new Date().toISOString().slice(0, 10);
 
-  const resp = await ai.models.generateContent({
-    model:            'gemini-2.5-flash',
-    contents:         userText, // 文字列でも OK（SDK 内でラップされる）
-    systemInstruction:`あなたはカレンダーアシスタントです。現在の日付は ${today} です。`,
-    responseMimeType: 'application/json',
-    responseSchema:   jobSchema,
-  });
+    const resp = await ai.models.generateContent({
+      model:    'gemini-2.5-flash',
+      contents: userText,
+      config: {
+        systemInstruction: `あなたはカレンダーアシスタントです。現在の日付は ${today} です。`,
+        responseMimeType:  'application/json',
+        responseSchema:    jobSchema,
+      },
+    });
 
     res.json(JSON.parse(resp.text ?? '{}'));
   } catch (err) {
