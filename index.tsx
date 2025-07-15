@@ -121,7 +121,7 @@ async function handleFormSubmit(event: Event) {
   try {
     // バックエンド（server.ts）経由で Gemini を呼び出す
     const resp = await fetch(
-      'https://your-app-api.onrender.com/api/schedule',
+      '/api/schedule',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
