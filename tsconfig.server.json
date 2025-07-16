@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",          // package.json が "type": "module" なので ES モジュールで出力
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "noEmit": false,            // ★ 追加して noEmit を打ち消す
+    "allowImportingTsExtensions": false,
+    "esModuleInterop": true,
+    "types": ["node"]
+  },
+  "include": ["server.ts"]
+}
