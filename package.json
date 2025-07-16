@@ -1,24 +1,24 @@
-
 {
-  "name": "ai-calendar-assistant",
-  "version": "1.0.0",
-  "description": "AI Calendar Assistant with Gemini",
-  "main": "dist/server.js",
+  "name": "prompt",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "node dist/server.js",
-    "build": "tsc",
-    "dev": "ts-node server.ts"
+    "build": "vite build && tsc -p tsconfig.server.json",
+    "start": "node dist/server.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@google/genai": "^0.12.0",
-    "express": "^4.19.2"
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.12.12",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.14.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0"
   }
 }
