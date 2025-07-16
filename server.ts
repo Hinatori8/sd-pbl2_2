@@ -1,4 +1,3 @@
-
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -16,13 +15,14 @@ app.use(express.static(staticPath));
 
 
 // API Key from environment variables.
-if (!process.env.API_KEY) {
+// GEMINI_API_KEY を使用するように修正
+if (!process.env.GEMINI_API_KEY) {
     // In a real app, you'd want more robust error handling or logging.
     // For this example, we'll log an error and exit if the key is missing.
-    console.error("FATAL ERROR: API_KEY environment variable not set.");
-    throw new Error("FATAL ERROR: API_KEY environment variable not set.");
+    console.error("FATAL ERROR: GEMINI_API_KEY environment variable not set.");
+    throw new Error("FATAL ERROR: GEMINI_API_KEY environment variable not set.");
 }
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }); // ここを修正
 
 const jobSchema = {
   type: Type.OBJECT,
