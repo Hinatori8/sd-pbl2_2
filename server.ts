@@ -10,7 +10,8 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 // Serve static files (index.html, index.css, index.tsx) from the project root
-const staticPath = path.join(__dirname, '..');
+//const staticPath = path.join(__dirname, '..');
+const staticPath = __dirname;
 app.use(express.static(staticPath));
 
 
